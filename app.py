@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify
-from pdfreader import SimplePDFViewer
+from pdfreader import PDFDocument
 from io import BytesIO
 from flask_cors import CORS
 import logging
@@ -13,15 +13,16 @@ logging.basicConfig(level=logging.INFO)
 @app.route('/extract-last-page-text', methods=['POST'])
 def extract_last_page_text():
     try:
+        # Read the PDF file
         pdf_file = request.files['file']
         pdf_bytes = pdf_file.read()
 
-        viewer = SimplePDFViewer(BytesIO(pdf_bytes))
-        last_page_num = len(viewer.pages)
-        viewer.navigate(last_page_num)
-        
-        viewer.render()
-        text = "".join(viewer.canvas.strings)
+        # Load the PDF document
+        with BytesIO(pdf_bytes) as pdf_stream:
+            pdf_document = PDFDocument(pdf_stream)
+            num_pages = len(pdf_document.pages)
+            last_page = pdf_document.pages[num_pages - 1]
+            text = last_page.extract_text()
 
         return jsonify({"text": text})
 
