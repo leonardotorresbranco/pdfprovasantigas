@@ -1,8 +1,10 @@
 from flask import Flask, request, jsonify
 from pdfreader import SimplePDFViewer
 from io import BytesIO
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 
 @app.route('/extract-last-page-text', methods=['POST'])
 def extract_last_page_text():
