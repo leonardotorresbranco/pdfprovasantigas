@@ -20,8 +20,10 @@ def extract_last_page_text():
         # Load the PDF document
         with BytesIO(pdf_bytes) as pdf_stream:
             pdf_document = PDFDocument(pdf_stream)
+
+            # Access pages directly and extract text from the last page
             num_pages = len(pdf_document.pages)
-            last_page = pdf_document.pages[num_pages - 1]
+            last_page = pdf_document.pages[-1]
             text = last_page.extract_text()
 
         return jsonify({"text": text})
