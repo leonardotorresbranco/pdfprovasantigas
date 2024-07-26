@@ -1,3 +1,4 @@
+import base64
 from flask import Flask, request, jsonify
 from PyPDF2 import PdfReader
 from io import BytesIO
@@ -13,12 +14,12 @@ logging.basicConfig(level=logging.INFO)
 @app.route('/extract-last-page-text', methods=['POST'])
 def extract_last_page_text():
     try:
-        # Read the PDF file
-        pdf_file = request.files['file']
-        if not pdf_file:
-            raise ValueError("No file part in the request")
-
-        pdf_bytes = pdf_file.read()
+        data = request.get_json()
+        base64_pdf = data.get('file')
+        if not base64_pdf:
+            raise ValueError("No file data in the request")
+        
+        pdf_bytes = base64.b64decode(base64_pdf)
         
         # Load the PDF document
         with BytesIO(pdf_bytes) as pdf_stream:
@@ -37,7 +38,6 @@ def extract_last_page_text():
     except Exception as e:
         logging.error("Error processing PDF: %s", str(e))
         return jsonify({"error": str(e)}), 500
-
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
