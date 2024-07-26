@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify
-from pdfreader import PDFDocument
+from PyPDF2 import PdfReader
 from io import BytesIO
 from flask_cors import CORS
 import logging
@@ -19,15 +19,15 @@ def extract_last_page_text():
 
         # Load the PDF document
         with BytesIO(pdf_bytes) as pdf_stream:
-            pdf_document = PDFDocument(pdf_stream)
-            
-            # Ensure pdf_document.pages is accessible
-            if not pdf_document.pages:
+            reader = PdfReader(pdf_stream)
+            num_pages = len(reader.pages)
+
+            if num_pages == 0:
                 raise ValueError("No pages found in the PDF document.")
             
             # Access the last page
-            last_page = pdf_document.pages[-1]
-            text = last_page.extract_text() if last_page else "No text extracted"
+            last_page = reader.pages[-1]
+            text = last_page.extract_text()
 
         return jsonify({"text": text})
 
