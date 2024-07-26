@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import base64
+import io  # Import the io module
 import PyPDF2
 
 app = Flask(__name__)
