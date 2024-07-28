@@ -1,6 +1,7 @@
 import io
 import base64
 from flask import Flask, request, jsonify
+from PyPDF2 import PdfReader
 from pdfminer.high_level import extract_text
 
 
@@ -11,9 +12,11 @@ def extract():
     try:
         file = request.json.get('file')
         file_data = base64.b64decode(file)
+        pdf_reader = PdfReader(io.BytesIO(file_data))
         num_pages = len(pdf_reader.pages)
         
         # Extract last page text
+        last_page = pdf_reader.pages[-1]
         last_page_text = extract_text(io.BytesIO(file_data), page_numbers=[num_pages - 1])
         
         # Extract questions text from all pages except the last one
