@@ -23,9 +23,6 @@ def extract_last_page_text():
         last_page = pdf_reader.pages[num_pages - 1]
         last_page_text = last_page.extract_text()
         
-        if last_page_text is None:
-            return jsonify({'error': 'No text found on the last page'}), 500
-        
         return jsonify({'text': last_page_text})
     
     except Exception as e:
@@ -44,35 +41,15 @@ def extract_questions_text():
         num_pages = len(pdf_reader.pages)
 
         # Extract text from all pages except the last one
-        questions = []
+        questions_text = ""
         for page_num in range(num_pages - 1):
             page = pdf_reader.pages[page_num]
-            page_text = page.extract_text()
-            if page_text:
-                questions.extend(parse_questions(page_text))
+            questions_text += page.extract_text() + "\n"
         
-        return jsonify({'questions': questions})
+        return jsonify({'text': questions_text.strip()})
     
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-
-def parse_questions(text):
-    questions = []
-    lines = text.split("\n")
-    question = None
-
-    for line in lines:
-        if line.strip().isdigit():
-            if question:
-                questions.append(question)
-            question = {"number": line.strip(), "text": ""}
-        elif question:
-            question["text"] += line + " "
-
-    if question:
-        questions.append(question)
-
-    return questions
 
 if __name__ == '__main__':
     app.run(debug=True)
