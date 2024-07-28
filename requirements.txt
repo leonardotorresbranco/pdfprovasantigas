@@ -17,4 +17,4 @@ wheel==0.43.0
 Flask
 PyPDF2
 Flask-Cors
-
+pdfminer.six
