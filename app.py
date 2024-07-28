@@ -1,55 +1,83 @@
 from flask import Flask, request, jsonify
-from flask_cors import CORS
+import PyPDF2
+from io import BytesIO
+from werkzeug.utils import secure_filename
+import re
+from PIL import Image
 import base64
-import io
-from PyPDF2 import PdfReader
 
 app = Flask(__name__)
-CORS(app)
 
-@app.route('/extract-last-page-text', methods=['POST'])
-def extract_last_page_text():
-    try:
-        data = request.json
-        if 'file' not in data:
-            return jsonify({'error': 'No file provided'}), 400
-
-        pdf_data = base64.b64decode(data['file'])
-        
-        pdf_reader = PdfReader(io.BytesIO(pdf_data))
-        num_pages = len(pdf_reader.pages)
-
-        # Extract text from the last page
-        last_page = pdf_reader.pages[num_pages - 1]
-        last_page_text = last_page.extract_text()
-        
-        return jsonify({'text': last_page_text})
+def extract_text_and_images(pdf_file):
+    pdf_reader = PyPDF2.PdfReader(pdf_file)
+    num_pages = len(pdf_reader.pages)
     
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    text = ""
+    images = []
+    parsed_data = []
 
-@app.route('/extract-questions-text', methods=['POST'])
-def extract_questions_text():
-    try:
-        data = request.json
-        if 'file' not in data:
-            return jsonify({'error': 'No file provided'}), 400
+    for page_number in range(num_pages):
+        page = pdf_reader.pages[page_number]
+        text += page.extract_text()
 
-        pdf_data = base64.b64decode(data['file'])
+        # Extracting images
+        if '/XObject' in page['/Resources']:
+            xObject = page['/Resources']['/XObject'].get_object()
+            for obj in xObject:
+                if xObject[obj]['/Subtype'] == '/Image':
+                    image = xObject[obj]
+                    size = (image['/Width'], image['/Height'])
+                    data = image.get_data()
+                    
+                    if image['/ColorSpace'] == '/DeviceRGB':
+                        mode = "RGB"
+                    else:
+                        mode = "P"
+                    
+                    img = Image.frombytes(mode, size, data)
+                    img_byte_arr = BytesIO()
+                    img.save(img_byte_arr, format='PNG')
+                    img_byte_arr = img_byte_arr.getvalue()
+                    img_base64 = base64.b64encode(img_byte_arr).decode('utf-8')
+                    
+                    images.append({
+                        "page": page_number + 1,
+                        "image": img_base64
+                    })
+
+    # Split text into questions and parse accordingly
+    questions = re.split(r'\d+\)', text)
+    for idx, question in enumerate(questions):
+        if idx == 0:
+            continue  # Skip the first split as it's before the first question
+        question_text = re.search(r'([\s\S]+?)(?:\nA\)|\nB\)|\nC\)|\nD\)|\nE\))', question)
+        if question_text:
+            question_text = question_text.group(0)
+        else:
+            question_text = question.strip()
         
-        pdf_reader = PdfReader(io.BytesIO(pdf_data))
-        num_pages = len(pdf_reader.pages)
+        parsed_data.append({
+            "question_number": idx,
+            "question_text": question_text
+        })
 
-        # Extract text from all pages except the last one
-        questions_text = ""
-        for page_num in range(num_pages - 1):
-            page = pdf_reader.pages[page_num]
-            questions_text += page.extract_text() + "\n"
-        
-        return jsonify({'text': questions_text.strip()})
+    return parsed_data, images
+
+@app.route('/extract', methods=['POST'])
+def extract():
+    if 'file' not in request.files:
+        return jsonify({"error": "No file part"}), 400
     
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({"error": "No selected file"}), 400
+    
+    if file:
+        filename = secure_filename(file.filename)
+        pdf_file = BytesIO(file.read())
+
+        parsed_data, images = extract_text_and_images(pdf_file)
+        return jsonify({"questions": parsed_data, "images": images})
 
 if __name__ == '__main__':
     app.run(debug=True)
