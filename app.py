@@ -7,6 +7,8 @@ from PyPDF2 import PdfReader
 app = Flask(__name__)
 CORS(app)
 
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
+
 @app.route('/extract-last-page-text', methods=['POST'])
 def extract_last_page_text():
     try:
