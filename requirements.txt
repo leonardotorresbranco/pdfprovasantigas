@@ -18,3 +18,4 @@ Flask
 PyPDF2
 Flask-Cors
 pdfminer.six
+requests
