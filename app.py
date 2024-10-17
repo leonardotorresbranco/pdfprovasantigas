@@ -14,7 +14,7 @@ from google.oauth2 import service_account
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
-load_dotenv()
+#load_dotenv()
 
 # Decode the credentials from environment variable
 credentials_base64 = os.getenv("GOOGLE_APPLICATION_CREDENTIALS_BASE64")

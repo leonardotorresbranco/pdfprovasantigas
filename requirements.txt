@@ -4,4 +4,3 @@ google-cloud-aiplatform
 PyPDF2
 requests
 google-auth
-dotenv
