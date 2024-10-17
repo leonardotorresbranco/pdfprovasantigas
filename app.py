@@ -8,7 +8,25 @@ import vertexai
 from vertexai.generative_models import GenerativeModel, Part, SafetySetting
 from google.cloud import aiplatform
 from google.cloud.aiplatform.gapic.schema import safety_settings_pb2
+import os
+import json
+from google.oauth2 import service_account
 
+# Decode the credentials from environment variable
+credentials_base64 = os.getenv("GOOGLE_APPLICATION_CREDENTIALS_BASE64")
+if credentials_base64 is None:
+    raise ValueError("Missing GOOGLE_APPLICATION_CREDENTIALS_BASE64 environment variable.")
+
+credentials_json = base64.b64decode(credentials_base64)
+credentials_info = json.loads(credentials_json)
+
+# Use the credentials to authenticate
+credentials = service_account.Credentials.from_service_account_info(credentials_info)
+vertexai.init(
+    project="trim-mariner-438916-b6",
+    location="us-central1",
+    credentials=credentials
+)
 
 app = Flask(__name__)
 CORS(app)
