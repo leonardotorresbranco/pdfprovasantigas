@@ -105,6 +105,7 @@ def extract_all_text():
         return jsonify({'error': str(e)}), 500
 
 
+# Remove reinitialization of vertexai inside generate() function
 @app.route('/generate', methods=['POST'])
 def generate():
     try:
@@ -115,12 +116,6 @@ def generate():
 
         if text1 is None or image1 is None:
             return jsonify({"error": "Missing text1 or image1 in the request"}), 400
-
-        # Initialize Vertex AI
-        vertexai.init(project="trim-mariner-438916-b6", location="us-central1")
-        model = vertexai.language_models.GenerativeModel(
-            "gemini-1.5-flash-002",
-        )
 
         # Set generation configuration
         generation_config = {
@@ -150,6 +145,7 @@ def generate():
         ]
 
         # Generate content
+        model = vertexai.language_models.GenerativeModel("gemini-1.5-flash-002")
         responses = model.generate_content(
             [text1, image1],
             generation_config=generation_config,
@@ -166,6 +162,7 @@ def generate():
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
 
 
 
