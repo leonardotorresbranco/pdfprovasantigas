@@ -4,6 +4,8 @@ import base64
 import io
 import requests
 from PyPDF2 import PdfReader
+import pytesseract
+from PIL import Image
 
 app = Flask(__name__)
 CORS(app)
@@ -96,6 +98,29 @@ def upload_to_blob():
     
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    
+
+@app.route('/ocr', methods=['POST'])
+def ocr():
+    try:
+        # Get image data from the request
+        image_data = request.json.get('image_data')
+        if not image_data:
+            return jsonify({'error': 'No image data provided'}), 400
+
+        # Decode the base64 image
+        image_bytes = base64.b64decode(image_data)
+        image = Image.open(io.BytesIO(image_bytes))
+
+        # Perform OCR on the image
+        text = pytesseract.image_to_string(image, lang='por')
+
+        return jsonify({'text': text})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+if __name__ == '__main__':
+    app.run(debug=True)
 
 def upload_to_vercel_blob_storage(file_data, file_name):
     # Implement the actual upload logic here.
