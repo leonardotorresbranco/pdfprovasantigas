@@ -11,7 +11,7 @@ from google.cloud import aiplatform
 import os
 import json
 from google.oauth2 import service_account
-from dotenv import load_dotenv
+#from dotenv import load_dotenv
 
 # Load environment variables from .env file
 #load_dotenv()
