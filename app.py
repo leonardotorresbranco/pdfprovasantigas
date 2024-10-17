@@ -4,11 +4,16 @@ import base64
 import io
 import requests
 from PyPDF2 import PdfReader
-import pytesseract
+from google.cloud import vision
 from PIL import Image
 
 app = Flask(__name__)
 CORS(app)
+
+textract_client = boto3.client('textract',
+                               region_name='your-region',
+                               aws_access_key_id='your-access-key-id',
+                               aws_secret_access_key='your-secret-access-key')
 
 @app.route('/extract-last-page-text', methods=['POST'])
 def extract_last_page_text():
@@ -110,23 +115,23 @@ def ocr():
 
         # Decode the base64 image
         image_bytes = base64.b64decode(image_data)
-        image = Image.open(io.BytesIO(image_bytes))
 
-        # Perform OCR on the image
-        text = pytesseract.image_to_string(image, lang='por')
+        # Perform OCR on the image using Amazon Textract
+        response = textract_client.detect_document_text(
+            Document={'Bytes': image_bytes}
+        )
 
-        return jsonify({'text': text})
+        # Extract detected text
+        text = ""
+        for item in response['Blocks']:
+            if item['BlockType'] == 'LINE':
+                text += item['Text'] + '\n'
+
+        return jsonify({'text': text.strip()})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-if __name__ == '__main__':
-    app.run(debug=True)
 
-def upload_to_vercel_blob_storage(file_data, file_name):
-    # Implement the actual upload logic here.
-    # Placeholder implementation:
-    # This function should return the URL of the uploaded file in Vercel Blob Storage
-    return f'https://your-vercel-deployment.vercel.app/blob/{file_name}'
 
 if __name__ == '__main__':
     app.run(debug=True)
