@@ -55,6 +55,31 @@ def extract_questions_text():
     
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    
+@app.route('/extract-all-text', methods=['POST'])
+def extract_questions_text():
+    try:
+        data = request.json
+        if 'file' in data:
+            pdf_data = base64.b64decode(data['file'])
+            pdf_reader = PdfReader(io.BytesIO(pdf_data))
+        elif 'url' in data:
+            pdf_url = data['url']
+            pdf_data = requests.get(pdf_url).content
+            pdf_reader = PdfReader(io.BytesIO(pdf_data))
+        else:
+            return jsonify({'error': 'No file or URL provided'}), 400
+
+        num_pages = len(pdf_reader.pages)
+        questions_text = ""
+        for page_num in range(num_pages):
+            page = pdf_reader.pages[page_num]
+            questions_text += page.extract_text() + "\n"
+        
+        return jsonify({'text': questions_text.strip()})
+    
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/upload-to-blob', methods=['POST'])
 def upload_to_blob():
