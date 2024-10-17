@@ -57,7 +57,7 @@ def extract_questions_text():
         return jsonify({'error': str(e)}), 500
     
 @app.route('/extract-all-text', methods=['POST'])
-def extract_questions_text():
+def extract_all_text():
     try:
         data = request.json
         if 'file' in data:
