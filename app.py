@@ -7,7 +7,6 @@ from PyPDF2 import PdfReader
 import vertexai
 from vertexai.generative_models import GenerativeModel, Part, SafetySetting
 from google.cloud import aiplatform
-from google.cloud.aiplatform.gapic.schema import safety_settings_pb2
 import os
 import json
 from google.oauth2 import service_account
@@ -126,21 +125,21 @@ def generate():
 
         # Define safety settings
         safety_settings = [
-            safety_settings_pb2.SafetySetting(
-                category=safety_settings_pb2.HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-                threshold=safety_settings_pb2.HarmBlockThreshold.BLOCK_THRESHOLD_OFF
+            SafetySetting(
+                category=SafetySetting.HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+                threshold=SafetySetting.HarmBlockThreshold.OFF
             ),
-            safety_settings_pb2.SafetySetting(
-                category=safety_settings_pb2.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-                threshold=safety_settings_pb2.HarmBlockThreshold.BLOCK_THRESHOLD_OFF
+            SafetySetting(
+                category=SafetySetting.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+                threshold=SafetySetting.HarmBlockThreshold.OFF
             ),
-            safety_settings_pb2.SafetySetting(
-                category=safety_settings_pb2.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-                threshold=safety_settings_pb2.HarmBlockThreshold.BLOCK_THRESHOLD_OFF
+            SafetySetting(
+                category=SafetySetting.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+                threshold=SafetySetting.HarmBlockThreshold.OFF
             ),
-            safety_settings_pb2.SafetySetting(
-                category=safety_settings_pb2.HarmCategory.HARM_CATEGORY_HARASSMENT,
-                threshold=safety_settings_pb2.HarmBlockThreshold.BLOCK_THRESHOLD_OFF
+            SafetySetting(
+                category=SafetySetting.HarmCategory.HARM_CATEGORY_HARASSMENT,
+                threshold=SafetySetting.HarmBlockThreshold.OFF
             ),
         ]
 

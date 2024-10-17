@@ -1,8 +1,6 @@
-Flask==3.0.3
-python-dateutil==2.9.0.post0
-PyPDF2
-Flask-Cors
-requests
+Flask
+flask-cors
 google-cloud-aiplatform
+PyPDF2
+requests
 google-auth
-
