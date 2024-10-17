@@ -6,10 +6,15 @@ import requests
 from PyPDF2 import PdfReader
 import vertexai
 from vertexai.generative_models import GenerativeModel, Part, SafetySetting
+from vertexai.preview.language_models import ChatModel, TextGenerationModel
 from google.cloud import aiplatform
 import os
 import json
 from google.oauth2 import service_account
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Decode the credentials from environment variable
 credentials_base64 = os.getenv("GOOGLE_APPLICATION_CREDENTIALS_BASE64")
@@ -27,8 +32,13 @@ vertexai.init(
     credentials=credentials
 )
 
+
+
 app = Flask(__name__)
 CORS(app)
+
+
+
 
 @app.route('/extract-last-page-text', methods=['POST'])
 def extract_last_page_text():
