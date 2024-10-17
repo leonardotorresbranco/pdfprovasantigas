@@ -4,16 +4,14 @@ import base64
 import io
 import requests
 from PyPDF2 import PdfReader
-from google.cloud import vision
-from PIL import Image
+import vertexai
+from vertexai.generative_models import GenerativeModel, Part, SafetySetting
+from google.cloud import aiplatform
+from google.cloud.aiplatform.gapic.schema import safety_settings_pb2
+
 
 app = Flask(__name__)
 CORS(app)
-
-textract_client = boto3.client('textract',
-                               region_name='your-region',
-                               aws_access_key_id='your-access-key-id',
-                               aws_secret_access_key='your-secret-access-key')
 
 @app.route('/extract-last-page-text', methods=['POST'])
 def extract_last_page_text():
@@ -88,46 +86,66 @@ def extract_all_text():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/upload-to-blob', methods=['POST'])
-def upload_to_blob():
+
+@app.route('/generate', methods=['POST'])
+def generate():
     try:
-        data = request.json
-        if 'file' not in data:
-            return jsonify({'error': 'No file provided'}), 400
+        # Parse request JSON for text1 and image1
+        req_data = request.get_json()
+        text1 = req_data.get("text1", None)
+        image1 = req_data.get("image1", None)
 
-        pdf_data = base64.b64decode(data['file'])
-        file_name = data.get('filename', 'uploaded_file.pdf')
+        if text1 is None or image1 is None:
+            return jsonify({"error": "Missing text1 or image1 in the request"}), 400
 
-        blob_url = upload_to_vercel_blob_storage(pdf_data, file_name)
-        return jsonify({'url': blob_url})
-    
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-    
-
-@app.route('/ocr', methods=['POST'])
-def ocr():
-    try:
-        # Get image data from the request
-        image_data = request.json.get('image_data')
-        if not image_data:
-            return jsonify({'error': 'No image data provided'}), 400
-
-        # Decode the base64 image
-        image_bytes = base64.b64decode(image_data)
-
-        # Perform OCR on the image using Amazon Textract
-        response = textract_client.detect_document_text(
-            Document={'Bytes': image_bytes}
+        # Initialize Vertex AI
+        vertexai.init(project="trim-mariner-438916-b6", location="us-central1")
+        model = vertexai.language_models.GenerativeModel(
+            "gemini-1.5-flash-002",
         )
 
-        # Extract detected text
-        text = ""
-        for item in response['Blocks']:
-            if item['BlockType'] == 'LINE':
-                text += item['Text'] + '\n'
+        # Set generation configuration
+        generation_config = {
+            "max_output_tokens": 8192,
+            "temperature": 1,
+            "top_p": 0.95,
+        }
 
-        return jsonify({'text': text.strip()})
+        # Define safety settings
+        safety_settings = [
+            safety_settings_pb2.SafetySetting(
+                category=safety_settings_pb2.HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+                threshold=safety_settings_pb2.HarmBlockThreshold.BLOCK_THRESHOLD_OFF
+            ),
+            safety_settings_pb2.SafetySetting(
+                category=safety_settings_pb2.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+                threshold=safety_settings_pb2.HarmBlockThreshold.BLOCK_THRESHOLD_OFF
+            ),
+            safety_settings_pb2.SafetySetting(
+                category=safety_settings_pb2.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+                threshold=safety_settings_pb2.HarmBlockThreshold.BLOCK_THRESHOLD_OFF
+            ),
+            safety_settings_pb2.SafetySetting(
+                category=safety_settings_pb2.HarmCategory.HARM_CATEGORY_HARASSMENT,
+                threshold=safety_settings_pb2.HarmBlockThreshold.BLOCK_THRESHOLD_OFF
+            ),
+        ]
+
+        # Generate content
+        responses = model.generate_content(
+            [text1, image1],
+            generation_config=generation_config,
+            safety_settings=safety_settings,
+            stream=True,
+        )
+
+        # Combine responses and return them
+        output = ""
+        for response in responses:
+            output += response.text
+
+        return jsonify({"generated_content": output})
+
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

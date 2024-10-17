@@ -19,4 +19,6 @@ PyPDF2
 Flask-Cors
 pdfminer.six
 requests
-boto3
+google-cloud-aiplatform
+google-auth
+
