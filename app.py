@@ -23,7 +23,7 @@ credentials_info = json.loads(credentials_json)
 # Use the credentials to authenticate
 credentials = service_account.Credentials.from_service_account_info(credentials_info)
 vertexai.init(
-    project="trim-mariner-438916-b6",
+    project="stone-bison-438919-h8",
     location="us-central1",
     credentials=credentials
 )
