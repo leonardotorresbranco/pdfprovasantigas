@@ -12,10 +12,10 @@ import os
 import json
 from google.oauth2 import service_account
 import logging
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 
 # Load environment variables from .env file
-load_dotenv()
+# load_dotenv()
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
